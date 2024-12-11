@@ -1,0 +1,44 @@
+ /* MacOS System 7 inspired styles */
+ body {
+    background-color: #999999;
+    font-family: "Chicago", system-ui;
+    margin: 0;
+    padding: 0;
+}
+
+.menu-bar {
+    background-color: #FFFFFF;
+    border-bottom: 1px solid #000;
+    height: 20px;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+}
+
+.desktop {
+    padding-top: 40px;
+    min-height: 100vh;
+}
+
+.window {
+    background-color: #FFFFFF;
+    border: 1px solid #000;
+    box-shadow: 2px 2px 0 #000;
+    position: absolute;
+    min-width: 200px;
+    min-height: 150px;
+}
+
+.window-title {
+    background-color: #000000;
+    color: #FFFFFF;
+    padding: 2px 5px;
+    font-size: 14px;
+    cursor: move;
+}
+
+.window-content {
+    padding: 10px;
+}
