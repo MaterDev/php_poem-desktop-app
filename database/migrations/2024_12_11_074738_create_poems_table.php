@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('poems', function (Blueprint $table) {
             $table->id();
+            $table->string('title');    
+            $table ->text('content');
+            $table->string('icon_path')->nullable();
+            $table->integer('position_x')->default(0);
+            $table->integer('position_y')->default(0);
             $table->timestamps();
         });
     }
