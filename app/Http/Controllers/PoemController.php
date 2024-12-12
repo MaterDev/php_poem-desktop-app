@@ -7,13 +7,24 @@ use Illuminate\Http\Request;
 
 class PoemController extends Controller
 {
+
+    /**
+     * Show the list of poems.
+     *
+     * @return \Illuminate\Contracts\View\View
+     */
     public function index()
     {
         $poems = Poem::all();
         return view('poems.index', ['poems' => $poems]);
     }
 
-    // Create new record for poem when submitted
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
     public function store(Request $request) {
         $poem = Poem::create([
             'title' => $request->title,
@@ -23,5 +34,31 @@ class PoemController extends Controller
         ]);
 
         return response()->json($poem);
+    }
+
+    /**
+     * Update the position of the given poem.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Poem  $poem
+     * @return \Illuminate\Http\Response
+     */
+    public function updatePosition(Request $request, Poem $poem)
+    {
+
+        $validate = $request->validate([
+            'x' => 'required|numeric',
+            'y' => 'required|numeric',
+        ]);
+
+        $poem->update([
+            'position_x' => $validate['x'],
+            'position_y' => $validate['y'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'poem' => $poem
+        ]);
     }
 }
