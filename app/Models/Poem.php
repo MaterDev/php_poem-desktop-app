@@ -13,7 +13,9 @@ class Poem extends Model
         'title',
         'content',
         'icon_path',
-        'position_x',
-        'position_y'
+        'icon_position_x',
+        'icon_position_y',
+        'window_position_x',
+        'window_position_y'
     ] ;
 }

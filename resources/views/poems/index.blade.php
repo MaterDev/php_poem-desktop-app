@@ -12,7 +12,7 @@
 <body>
     <h1>Poetry Desktop App</h1>
 
-    <div class="menu-bar">
+    <div id="menu-bar" class="menu-bar">
         <div class="apple-menu"></div>
         <span>File</span>
     </div>
@@ -23,9 +23,9 @@
         @foreach($poems as $poem)
         <div class="desktop-icon"
             data-poem-id="{{ $poem->id }}"
-            data-x="{{ $poem->position_x }}"
-            data-y="{{ $poem->position_y }}"
-            style="left: {{ $poem->position_x }}px; top: {{ $poem->position_y }}px;">
+            data-x="{{ $poem->icon_position_x }}"
+            data-y="{{ $poem->icon_position_y }}"
+            style="left: {{ $poem->icon_position_x }}px; top: {{ $poem->icon_position_y }}px;">
             <div class="icon-image"></div>
             <div class="icon-title">{{ $poem->title }}</div>
         </div>
@@ -35,7 +35,9 @@
 
         <!-- Windows (hidden by default)  -->
         @foreach($poems as $poem)
-        <div class="window" style="display: none;" data-poem-id="{{ $poem->id }}">
+        <div class="window"
+            style="display: none; left: {{ $poem->window_position_x }}px; top: {{ $poem->window_position_y }}px;"
+            data-poem-id="{{ $poem->id }}">
             <div class="window-controls">
                 <div class="window-button close-button"></div>
                 <div class="window-button minimize-button"></div>
@@ -80,7 +82,32 @@
                 }
 
                 function stopDragging() {
-                    isDragging = false;
+                    if (isDragging) {
+                        isDragging = false;
+                        const poemId = window.dataset.poemId;
+                        const x = window.offsetLeft;
+                        const y = window.offsetTop;
+
+                        // Send window position to server
+                        fetch(`/poems/${poemId}/window-position`, {
+                                method: 'PATCH',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                },
+                                body: JSON.stringify({
+                                    x,
+                                    y
+                                })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                console.log('Window position updated:', data);
+                            })
+                            .catch(error => {
+                                console.error('Error updating window position:', error);
+                            });
+                    }
                 }
             });
 
@@ -91,8 +118,11 @@
                     const window = document.querySelector(`.window[data-poem-id="${poemId}"]`);
                     if (window) {
                         window.style.display = 'block';
-                        window.style.top = '50px';
-                        window.style.left = '50px';
+                        // Use the saved positions from the database
+                        const savedTop = window.style.top || '50px';
+                        const savedLeft = window.style.left || '50px';
+                        window.style.top = savedTop;
+                        window.style.left = savedLeft;
                         bringWindowToFront(window);
                     }
                 });
@@ -152,7 +182,7 @@
                         const y = icon.offsetTop;
 
                         // Send position to server
-                        fetch(`/poems/${poemId}/position`, {
+                        fetch(`/poems/${poemId}/icon-position`, {
                                 method: 'PATCH',
                                 headers: {
                                     'Content-Type': 'application/json',
@@ -181,6 +211,9 @@
             function bringWindowToFront(window) {
                 topZIndex++;
                 window.style.zIndex = topZIndex;
+
+                // Keep menu bar above all other things
+                document.getElementById('menu-bar').style.zIndex = topZIndex + 1
             }
 
             document.querySelectorAll('.window').forEach(window => {

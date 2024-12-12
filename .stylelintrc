@@ -1,0 +1,7 @@
+{
+  "rules": {
+    "property-no-unknown": null,
+    "selector-pseudo-class-no-unknown": null
+  },
+  "ignoreFiles": ["**/*.blade.php"]
+}

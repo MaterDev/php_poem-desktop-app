@@ -25,7 +25,8 @@ class PoemController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
         $poem = Poem::create([
             'title' => $request->title,
             'content' => $request->content,
@@ -43,17 +44,36 @@ class PoemController extends Controller
      * @param  \App\Models\Poem  $poem
      * @return \Illuminate\Http\Response
      */
-    public function updatePosition(Request $request, Poem $poem)
+    public function updateIconPosition(Request $request, Poem $poem)
     {
 
-        $validate = $request->validate([
+        $validated = $request->validate([
             'x' => 'required|numeric',
             'y' => 'required|numeric',
         ]);
 
         $poem->update([
-            'position_x' => $validate['x'],
-            'position_y' => $validate['y'],
+            'icon_position_x' => $validated['x'],
+            'icon_position_y' => $validated['y'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'poem' => $poem
+        ]);
+    }
+
+    public function updateWindowPosition(Request $request, Poem $poem)
+
+    {
+        $validated = $request->validate([
+            'x' => 'required|numeric',
+            'y' => 'required|numeric',
+        ]);
+
+        $poem->update([
+            'window_position_x' => $validated['x'],
+            'window_position_y' => $validated['y'],
         ]);
 
         return response()->json([
