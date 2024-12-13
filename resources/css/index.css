@@ -47,14 +47,14 @@ body {
 .window {
     background-color: #ffffff;
     border: 1px solid #000;
-    box-shadow: 2px 2px 0 #000;
+    box-shadow: 2px 2px 0 #2e2e2e90;
     min-height: 150px;
     min-width: 200px;
     position: absolute;
 }
 
 .window-title {
-    background-color: #000000;
+    background-color: #626262;
     color: #ffffff;
     cursor: move;
     font-size: 14px;
@@ -94,10 +94,10 @@ body {
     position: absolute;
     bottom: 0;
     right: 0;
-    width: 15px;
-    height: 15px;
+    width: 10px;
+    height: 10px;
     cursor: se-resize;
-    background: linear-gradient(135deg, transparent 50%, #000 50%);
+    background: linear-gradient(135deg, transparent 70%, #626262 70%);
 }
 
 /* Desktop Icon Styles */

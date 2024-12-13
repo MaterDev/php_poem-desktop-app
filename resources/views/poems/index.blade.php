@@ -49,6 +49,19 @@
     </div>
 
     <script>
+
+        function constrainToViewport(x, y, width, height) {
+            const viewport = {
+                width: window.innerWidth,
+                height: window.innerHeight - 20
+            }
+
+            return {
+                x: Math.min(Math.max(x, 0), viewport.width - width),
+                y: Math.min(Math.max(y, 0), viewport.height - height)
+            } 
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             // Basic dragging functionality for windows
             document.querySelectorAll('.window').forEach(window => {
@@ -65,6 +78,7 @@
 
                 function startDragging(event) {
                     if (event.target === title) {
+                        event.preventDefault();
                         isDragging = true;
                         initialX = event.clientX - window.offsetLeft;
                         initialY = event.clientY - window.offsetTop;
@@ -74,10 +88,16 @@
                 function drag(event) {
                     if (isDragging) {
                         event.preventDefault();
-                        currentX = event.clientX - initialX;
-                        currentY = event.clientY - initialY;
-                        window.style.left = `${currentX}px`;
-                        window.style.top = `${currentY}px`;
+
+                        // calculate new position
+                        const newX = event.clientX - initialX;
+                        const newY = event.clientY - initialY;
+
+                        // constrain to viewport
+                        const constrained = constrainToViewport(newX, newY, window.offsetWidth, window.offsetHeight);
+
+                        window.style.left = `${constrained.x}px`;
+                        window.style.top = `${constrained.y}px`;
                     }
                 }
 
@@ -237,10 +257,18 @@
                 function drag(event) {
                     if (isDragging) {
                         event.preventDefault();
-                        currentX = event.clientX - initialX;
-                        currentY = event.clientY - initialY;
-                        icon.style.left = `${currentX}px`;
-                        icon.style.top = `${currentY}px`;
+                       
+                        // calculate new position
+                        newX = event.clientX - initialX;
+                        newY = event.clientY - initialY;
+
+                        // constrain to viewport
+                        const constrained = constrainToViewport(newX, newY, icon.offsetWidth, icon.offsetHeight);
+                        
+
+
+                        icon.style.left = `${constrained.x}px`;
+                        icon.style.top = `${constrained.y}px`;
                     }
                 }
 
