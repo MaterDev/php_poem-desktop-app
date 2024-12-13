@@ -81,4 +81,22 @@ class PoemController extends Controller
             'poem' => $poem
         ]);
     }
+
+    public function updateWindowSize(Request $request, Poem $poem)
+    {
+        $validated = $request->validate([
+            'width' => 'required|numeric|min:200',
+            'height' => 'required|numeric|min:150',
+        ]);
+
+        $poem->update([
+            'window_width' => $validated['width'],
+            'window_height' => $validated['height'],
+        ]);
+        
+        return response()->json([
+            'success' => true,
+            'poem' => $poem
+        ]);
+    }
 }

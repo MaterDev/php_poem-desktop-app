@@ -2,7 +2,6 @@
 
 /* Global Styles */
 body {
-    background-color: #999999;
     font-family: "Chicago", system-ui;
     margin: 0;
     padding: 0;
@@ -21,19 +20,27 @@ body {
     top: 0;
     width: 100%;
     z-index: 1000;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .apple-menu {
-    background: #000;
     height: 16px;
     margin-right: 10px;
     width: 16px;
+    display: block;
 }
 
 /* Desktop Styles */
 .desktop {
     min-height: 100vh;
     padding-top: 40px;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 /* Window Styles */
@@ -53,10 +60,18 @@ body {
     font-size: 14px;
     padding: 2px 5px 2px 20px; /* Make room for buttons */
     text-align: center;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .window-content {
     padding: 10px;
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
 }
 
 .window-controls {
@@ -73,6 +88,16 @@ body {
     cursor: pointer;
     height: 12px;
     width: 12px;
+}
+
+.window-resize {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 15px;
+    height: 15px;
+    cursor: se-resize;
+    background: linear-gradient(135deg, transparent 50%, #000 50%);
 }
 
 /* Desktop Icon Styles */
@@ -96,4 +121,8 @@ body {
     color: #fff;
     font-size: 12px;
     text-shadow: 1px 1px 1px #000;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }

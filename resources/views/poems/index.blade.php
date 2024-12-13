@@ -9,11 +9,8 @@
 
 </head>
 
-<body>
-    <h1>Poetry Desktop App</h1>
-
-    <div id="menu-bar" class="menu-bar">
-        <div class="apple-menu"></div>
+<body style="background-image: url('{{ asset('images/background.png') }}'); background-size: cover; background-position: center; background-repeat: no-repeat;">        <div id="menu-bar" class="menu-bar">
+        <img src="{{ asset('images/logo.png') }}" class="apple-menu" alt="logo">
         <span>File</span>
     </div>
 
@@ -36,7 +33,7 @@
         <!-- Windows (hidden by default)  -->
         @foreach($poems as $poem)
         <div class="window"
-            style="display: none; left: {{ $poem->window_position_x }}px; top: {{ $poem->window_position_y }}px;"
+            style="display: none; left: {{ $poem->window_position_x }}px; top: {{ $poem->window_position_y }}px; width: {{ $poem->window_width }}px; height: {{ $poem->window_height }}px;"
             data-poem-id="{{ $poem->id }}">
             <div class="window-controls">
                 <div class="window-button close-button"></div>
@@ -46,6 +43,7 @@
             <div class="window-content">
                 {!! nl2br(e($poem->content)) !!}
             </div>
+            <div class="window-resize"></div>
         </div>
         @endforeach
     </div>
@@ -66,9 +64,11 @@
                 document.addEventListener('mouseup', stopDragging);
 
                 function startDragging(event) {
-                    isDragging = true;
-                    initialX = event.clientX - window.offsetLeft;
-                    initialY = event.clientY - window.offsetTop;
+                    if (event.target === title) {
+                        isDragging = true;
+                        initialX = event.clientX - window.offsetLeft;
+                        initialY = event.clientY - window.offsetTop;
+                    }
                 }
 
                 function drag(event) {
@@ -110,6 +110,73 @@
                     }
                 }
             });
+
+            // WIndow resize functionality
+            document.querySelectorAll('.window').forEach(window => {
+                let isResizing = false;
+                let initialWidth;
+                let initialHeight;
+                let initialX;
+                let initialY;
+
+                const resizeHandle = window.querySelector('.window-resize');
+
+                resizeHandle.addEventListener('mousedown', startResizing);
+                document.addEventListener('mousemove', resize);
+                document.addEventListener('mouseup', stopResizing);
+
+                function startResizing(event) {
+                    isResizing = true;
+                    initialWidth = window.offsetWidth;
+                    initialHeight = window.offsetHeight;
+                    initialX = event.clientX;
+                    initialY = event.clientY;
+                    event.preventDefault();
+                }
+
+                function resize(event) {
+                    if (!isResizing) return;
+
+                    const newWidth = initialWidth + (event.clientX - initialX);
+                    const newHeight = initialHeight + (event.clientY - initialY);
+
+                    // set minimum size
+                    if (newWidth >= 200 && newHeight >= 150) {
+                        window.style.width = newWidth + 'px';
+                        window.style.height = newHeight + 'px';
+                    }
+                }
+                
+                function stopResizing() {
+                    if (isResizing) {
+                        isResizing = false;
+
+                        const poemId = window.dataset.poemId;
+                        const width = window.offsetWidth;
+                        const height = window.offsetHeight;
+
+                        // Send window size to database
+                        fetch(`/poems/${poemId}/window-size`, {
+                                method: 'PATCH',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                },
+                                body: JSON.stringify({
+                                    width,
+                                    height
+                                })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                console.log('Window size updated:', data);
+                            })
+                            .catch(error => {
+                                console.error('Error updating window size:', error);
+                            });
+                    }
+                }
+            })
 
             // When icon is double-clicked, will open the corresponding window
             document.querySelectorAll('.desktop-icon').forEach(icon => {
@@ -158,10 +225,13 @@
                 document.addEventListener('mouseup', stopDragging);
 
                 function startDragging(event) {
-                    isDragging = true;
-                    initialX = event.clientX - icon.offsetLeft;
-                    initialY = event.clientY - icon.offsetTop;
-                    console.log(`Start dragging icon ${icon.dataset.poemId}`);
+                    if (event.target === icon || event.target.classList.contains('icon-image') || event.target.classList.contains('icon-title')) {
+
+                        isDragging = true;
+                        initialX = event.clientX - icon.offsetLeft;
+                        initialY = event.clientY - icon.offsetTop;
+                        console.log(`Start dragging icon ${icon.dataset.poemId}`);
+                    }
                 }
 
                 function drag(event) {
