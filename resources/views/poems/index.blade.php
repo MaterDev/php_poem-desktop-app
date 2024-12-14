@@ -1,21 +1,17 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-
     @vite(['resources/css/index.css'])
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Poetry Desktop App</title>
-
 </head>
-
-<body style="background-image: url('{{ asset('images/background.png') }}'); background-size: cover; background-position: center; background-repeat: no-repeat;">        <div id="menu-bar" class="menu-bar">
+<body>
+    <div id="menu-bar" class="menu-bar">
         <img src="{{ asset('images/logo.png') }}" class="apple-menu" alt="logo">
         <span>File</span>
     </div>
 
     <div class="desktop">
-
         <!-- Desktop Icons -->
         @foreach($poems as $poem)
         <div class="desktop-icon"
@@ -26,15 +22,13 @@
             <div class="icon-image"></div>
             <div class="icon-title">{{ $poem->title }}</div>
         </div>
-
         @endforeach
-
 
         <!-- Windows (hidden by default)  -->
         @foreach($poems as $poem)
         <div class="window"
-            style="display: none; left: {{ $poem->window_position_x }}px; top: {{ $poem->window_position_y }}px; width: {{ $poem->window_width }}px; height: {{ $poem->window_height }}px;"
-            data-poem-id="{{ $poem->id }}">
+            data-poem-id="{{ $poem->id }}"
+            style="left: {{ $poem->window_position_x }}px; top: {{ $poem->window_position_y }}px; width: {{ $poem->window_width }}px; height: {{ $poem->window_height }}px;">
             <div class="window-controls">
                 <div class="window-button close-button"></div>
                 <div class="window-button minimize-button"></div>
@@ -49,7 +43,6 @@
     </div>
 
     <script>
-
         function constrainToViewport(x, y, width, height) {
             const viewport = {
                 width: window.innerWidth,
@@ -63,18 +56,29 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            let topZIndex = 1000;
+
+            function bringWindowToFront(window) {
+                topZIndex++;
+                window.style.zIndex = topZIndex;
+                document.getElementById('menu-bar').style.zIndex = topZIndex + 1;
+            }
+
             // Basic dragging functionality for windows
             document.querySelectorAll('.window').forEach(window => {
+                window.style.zIndex = 1000;
                 const title = window.querySelector('.window-title');
                 let isDragging = false;
-                let currentX;
-                let currentY;
                 let initialX;
                 let initialY;
 
                 title.addEventListener('mousedown', startDragging);
                 document.addEventListener('mousemove', drag);
                 document.addEventListener('mouseup', stopDragging);
+
+                window.addEventListener('mousedown', () => {
+                    bringWindowToFront(window);
+                });
 
                 function startDragging(event) {
                     if (event.target === title) {
@@ -88,14 +92,9 @@
                 function drag(event) {
                     if (isDragging) {
                         event.preventDefault();
-
-                        // calculate new position
                         const newX = event.clientX - initialX;
                         const newY = event.clientY - initialY;
-
-                        // constrain to viewport
                         const constrained = constrainToViewport(newX, newY, window.offsetWidth, window.offsetHeight);
-
                         window.style.left = `${constrained.x}px`;
                         window.style.top = `${constrained.y}px`;
                     }
@@ -108,30 +107,22 @@
                         const x = window.offsetLeft;
                         const y = window.offsetTop;
 
-                        // Send window position to server
                         fetch(`/poems/${poemId}/window-position`, {
-                                method: 'PATCH',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                                },
-                                body: JSON.stringify({
-                                    x,
-                                    y
-                                })
-                            })
-                            .then(response => response.json())
-                            .then(data => {
-                                console.log('Window position updated:', data);
-                            })
-                            .catch(error => {
-                                console.error('Error updating window position:', error);
-                            });
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({ x, y })
+                        })
+                        .then(response => response.json())
+                        .then(data => console.log('Window position updated:', data))
+                        .catch(error => console.error('Error updating window position:', error));
                     }
                 }
             });
 
-            // WIndow resize functionality
+            // Window resize functionality
             document.querySelectorAll('.window').forEach(window => {
                 let isResizing = false;
                 let initialWidth;
@@ -156,11 +147,8 @@
 
                 function resize(event) {
                     if (!isResizing) return;
-
                     const newWidth = initialWidth + (event.clientX - initialX);
                     const newHeight = initialHeight + (event.clientY - initialY);
-
-                    // set minimum size
                     if (newWidth >= 200 && newHeight >= 150) {
                         window.style.width = newWidth + 'px';
                         window.style.height = newHeight + 'px';
@@ -170,103 +158,56 @@
                 function stopResizing() {
                     if (isResizing) {
                         isResizing = false;
-
                         const poemId = window.dataset.poemId;
                         const width = window.offsetWidth;
                         const height = window.offsetHeight;
 
-                        // Send window size to database
                         fetch(`/poems/${poemId}/window-size`, {
-                                method: 'PATCH',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                                },
-                                body: JSON.stringify({
-                                    width,
-                                    height
-                                })
-                            })
-                            .then(response => response.json())
-                            .then(data => {
-                                console.log('Window size updated:', data);
-                            })
-                            .catch(error => {
-                                console.error('Error updating window size:', error);
-                            });
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({ width, height })
+                        })
+                        .then(response => response.json())
+                        .then(data => console.log('Window size updated:', data))
+                        .catch(error => console.error('Error updating window size:', error));
                     }
                 }
-            })
-
-            // When icon is double-clicked, will open the corresponding window
-            document.querySelectorAll('.desktop-icon').forEach(icon => {
-                icon.addEventListener('dblclick', () => {
-                    const poemId = icon.dataset.poemId;
-                    const window = document.querySelector(`.window[data-poem-id="${poemId}"]`);
-                    if (window) {
-                        window.style.display = 'block';
-                        // Use the saved positions from the database
-                        const savedTop = window.style.top || '50px';
-                        const savedLeft = window.style.left || '50px';
-                        window.style.top = savedTop;
-                        window.style.left = savedLeft;
-                        bringWindowToFront(window);
-                    }
-                });
             });
 
-            // When close button is selected, will make window invisible
-            document.querySelectorAll('.close-button').forEach(button => {
-                button.addEventListener('click', () => {
-                    const window = button.closest('.window');
-                    if (window) {
-                        window.style.display = 'none';
-                    }
-                });
-            });
-
-            // Make icons draggable and position them based on database values
+            // Desktop icon functionality
             document.querySelectorAll('.desktop-icon').forEach(icon => {
                 let isDragging = false;
-                let currentX;
-                let currentY;
                 let initialX;
                 let initialY;
 
-                // Set initial position based on database values
                 const x = parseInt(icon.dataset.x) || 0;
                 const y = parseInt(icon.dataset.y) || 0;
                 icon.style.left = `${x}px`;
                 icon.style.top = `${y}px`;
-                console.log(`Icon ${icon.dataset.poemId} initial position: x=${x}, y=${y}`);
 
                 icon.addEventListener('mousedown', startDragging);
                 document.addEventListener('mousemove', drag);
                 document.addEventListener('mouseup', stopDragging);
+                icon.addEventListener('dblclick', openWindow);
 
                 function startDragging(event) {
                     if (event.target === icon || event.target.classList.contains('icon-image') || event.target.classList.contains('icon-title')) {
-
                         isDragging = true;
                         initialX = event.clientX - icon.offsetLeft;
                         initialY = event.clientY - icon.offsetTop;
-                        console.log(`Start dragging icon ${icon.dataset.poemId}`);
+                        event.preventDefault();
                     }
                 }
 
                 function drag(event) {
                     if (isDragging) {
                         event.preventDefault();
-                       
-                        // calculate new position
-                        newX = event.clientX - initialX;
-                        newY = event.clientY - initialY;
-
-                        // constrain to viewport
+                        const newX = event.clientX - initialX;
+                        const newY = event.clientY - initialY;
                         const constrained = constrainToViewport(newX, newY, icon.offsetWidth, icon.offsetHeight);
-                        
-
-
                         icon.style.left = `${constrained.x}px`;
                         icon.style.top = `${constrained.y}px`;
                     }
@@ -279,54 +220,40 @@
                         const x = icon.offsetLeft;
                         const y = icon.offsetTop;
 
-                        // Send position to server
                         fetch(`/poems/${poemId}/icon-position`, {
-                                method: 'PATCH',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                                },
-                                body: JSON.stringify({
-                                    x,
-                                    y
-                                })
-                            })
-                            .then(response => response.json())
-                            .then(data => {
-                                console.log('Position updated:', data)
-                            })
-                            .catch(error => {
-                                console.error('Error updating position:', error);
-                            });
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({ x, y })
+                        })
+                        .then(response => response.json())
+                        .then(data => console.log('Position updated:', data))
+                        .catch(error => console.error('Error updating position:', error));
+                    }
+                }
 
-                        console.log(`Stopped dragging icon ${icon.dataset.poemId}. New position: x=${icon.offsetLeft}, y=${icon.offsetTop}`);
+                function openWindow() {
+                    const poemId = icon.dataset.poemId;
+                    const window = document.querySelector(`.window[data-poem-id="${poemId}"]`);
+                    if (window) {
+                        window.style.display = 'block';
+                        bringWindowToFront(window);
                     }
                 }
             });
 
-            let topZIndex = 1000; // Higher number means closer to foreground
+            // Window control buttons functionality
+            document.querySelectorAll('.window-controls').forEach(controls => {
+                const window = controls.closest('.window');
+                const closeButton = controls.querySelector('.close-button');
+                const minimizeButton = controls.querySelector('.minimize-button');
 
-            function bringWindowToFront(window) {
-                topZIndex++;
-                window.style.zIndex = topZIndex;
-
-                // Keep menu bar above all other things
-                document.getElementById('menu-bar').style.zIndex = topZIndex + 1
-            }
-
-            document.querySelectorAll('.window').forEach(window => {
-                // Set initial z-index
-                window.style.zIndex = 1000;
-
-                // Bring to front when the window is clicked elsewhere
-                window.addEventListener('mousedown', () => {
-                    bringWindowToFront(window);
-                })
-            })
+                closeButton.addEventListener('click', () => window.style.display = 'none');
+                minimizeButton.addEventListener('click', () => window.style.display = 'none');
+            });
         });
     </script>
-
-
 </body>
-
 </html>
