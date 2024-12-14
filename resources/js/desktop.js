@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Window resize functionality
-    document.querySelectorAll('.window').forEach(window => {
+    function setupWindowResize(window) {
         let isResizing = false;
         let initialWidth;
         let initialHeight;
@@ -119,10 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let initialY;
 
         const resizeHandle = window.querySelector('.window-resize');
-
-        resizeHandle.addEventListener('mousedown', startResizing);
-        document.addEventListener('mousemove', resize);
-        document.addEventListener('mouseup', stopResizing);
+        if (!resizeHandle) return;
 
         function startResizing(event) {
             isResizing = true;
@@ -146,9 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
         function stopResizing() {
             if (isResizing) {
                 isResizing = false;
-                document.removeEventListener('mousemove', resize);
-                document.removeEventListener('mouseup', stopResizing);
-
+                
                 // Save the new size to the database
                 const poemId = window.dataset.poemId;
                 const width = parseInt(window.style.width);
@@ -179,6 +174,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 .catch(error => console.error('Error updating window size:', error));
             }
         }
+
+        // Setup event listeners
+        resizeHandle.addEventListener('mousedown', startResizing);
+        document.addEventListener('mousemove', resize);
+        document.addEventListener('mouseup', stopResizing);
+
+        // Store event listeners on the window for cleanup
+        window._resizeListeners = {
+            start: startResizing,
+            move: resize,
+            stop: stopResizing
+        };
+    }
+
+    document.querySelectorAll('.window').forEach(window => {
+        setupWindowResize(window);
     });
 
     // Desktop icon functionality
@@ -243,11 +254,19 @@ document.addEventListener('DOMContentLoaded', function() {
             const width = parseInt(window.dataset.width) || 200;  
             const height = parseInt(window.dataset.height) || 150;  
             
-            // Ensure window is not maximized
+            // Ensure window is not maximized and resize is enabled
             delete window.dataset.isMaximized;
             const maximizeButton = window.querySelector('.maximize-button');
             if (maximizeButton) {
                 maximizeButton.classList.remove('is-maximized');
+            }
+            
+            // Always enable resize functionality when opening
+            const resizeHandle = window.querySelector('.window-resize');
+            if (resizeHandle) {
+                resizeHandle.style.display = 'block';
+                resizeHandle.style.pointerEvents = 'auto';
+                resizeHandle.style.visibility = 'visible';
             }
             
             // Store the current size as the original (non-maximized) size
@@ -262,11 +281,8 @@ document.addEventListener('DOMContentLoaded', function() {
             window.style.left = `${x}px`;
             window.style.top = `${y}px`;
             
-            // Enable resize functionality
-            const resizeHandle = window.querySelector('.window-resize');
-            if (resizeHandle) {
-                resizeHandle.style.pointerEvents = 'auto';
-            }
+            // Setup resize functionality
+            setupWindowResize(window);
             
             window.style.display = 'block';
             bringWindowToFront(window);
