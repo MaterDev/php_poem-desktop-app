@@ -26,15 +26,20 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     document.querySelectorAll('.window').forEach(window => {
-        window.style.left = window.dataset.x + 'px';
-        window.style.top = window.dataset.y + 'px';
-        window.style.width = window.dataset.width + 'px';
-        window.style.height = window.dataset.height + 'px';
+        // Set initial position from data attributes, with default values
+        const x = parseInt(window.dataset.x) || 50;
+        const y = parseInt(window.dataset.y) || 50;
+        const width = parseInt(window.dataset.width) || 400;
+        const height = parseInt(window.dataset.height) || 300;
+        
+        window.style.left = `${x}px`;
+        window.style.top = `${y}px`;
+        window.style.width = `${width}px`;
+        window.style.height = `${height}px`;
     });
 
-    // Basic dragging functionality for windows
+    // Window dragging functionality
     document.querySelectorAll('.window').forEach(window => {
-        window.style.zIndex = 1000;
         const title = window.querySelector('.window-title');
         let isDragging = false;
         let initialX;
@@ -44,11 +49,13 @@ document.addEventListener('DOMContentLoaded', function() {
         document.addEventListener('mousemove', drag);
         document.addEventListener('mouseup', stopDragging);
 
-        window.addEventListener('mousedown', () => {
+        window.addEventListener('click', () => {
             bringWindowToFront(window);
         });
 
         function startDragging(event) {
+            if (window.dataset.isMaximized) return; // Prevent dragging if maximized
+            
             if (event.target === title) {
                 event.preventDefault();
                 isDragging = true;
@@ -71,21 +78,34 @@ document.addEventListener('DOMContentLoaded', function() {
         function stopDragging() {
             if (isDragging) {
                 isDragging = false;
-                const poemId = window.dataset.poemId;
-                const x = window.offsetLeft;
-                const y = window.offsetTop;
-
-                fetch(`/poems/${poemId}/window-position`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    },
-                    body: JSON.stringify({ x, y })
-                })
-                .then(response => response.json())
-                .then(data => console.log('Window position updated:', data))
-                .catch(error => console.error('Error updating window position:', error));
+                
+                // Save window position if it's not maximized
+                if (!window.dataset.isMaximized) {
+                    const poemId = window.dataset.poemId;
+                    // Get the current position and ensure it's a number
+                    const x = parseInt(window.style.left);
+                    const y = parseInt(window.style.top);
+                    
+                    // Update the dataset to match the new position
+                    window.dataset.x = x;
+                    window.dataset.y = y;
+                    
+                    fetch(`/poems/${poemId}/window-position`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify({ x, y })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            console.log('Window position saved:', { x, y });
+                        }
+                    })
+                    .catch(error => console.error('Error updating window position:', error));
+                }
             }
         }
     });
@@ -126,9 +146,21 @@ document.addEventListener('DOMContentLoaded', function() {
         function stopResizing() {
             if (isResizing) {
                 isResizing = false;
+                document.removeEventListener('mousemove', resize);
+                document.removeEventListener('mouseup', stopResizing);
+
+                // Save the new size to the database
                 const poemId = window.dataset.poemId;
-                const width = window.offsetWidth;
-                const height = window.offsetHeight;
+                const width = parseInt(window.style.width);
+                const height = parseInt(window.style.height);
+
+                // Update the dataset with new size
+                window.dataset.width = width;
+                window.dataset.height = height;
+                
+                // Store as original (non-maximized) size
+                window.dataset.originalWidth = `${width}px`;
+                window.dataset.originalHeight = `${height}px`;
 
                 fetch(`/poems/${poemId}/window-size`, {
                     method: 'PATCH',
@@ -139,7 +171,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     body: JSON.stringify({ width, height })
                 })
                 .then(response => response.json())
-                .then(data => console.log('Window size updated:', data))
+                .then(data => {
+                    if (data.success) {
+                        console.log('Window size saved:', { width, height });
+                    }
+                })
                 .catch(error => console.error('Error updating window size:', error));
             }
         }
@@ -154,7 +190,7 @@ document.addEventListener('DOMContentLoaded', function() {
         icon.addEventListener('mousedown', startDragging);
         document.addEventListener('mousemove', drag);
         document.addEventListener('mouseup', stopDragging);
-        icon.addEventListener('dblclick', openWindow);
+        icon.addEventListener('dblclick', () => openWindow(icon.dataset.poemId));
 
         function startDragging(event) {
             if (event.target === icon || event.target.classList.contains('icon-image') || event.target.classList.contains('icon-title')) {
@@ -196,24 +232,91 @@ document.addEventListener('DOMContentLoaded', function() {
                 .catch(error => console.error('Error updating position:', error));
             }
         }
-
-        function openWindow() {
-            const poemId = icon.dataset.poemId;
-            const window = document.querySelector(`.window[data-poem-id="${poemId}"]`);
-            if (window) {
-                window.style.display = 'block';
-                bringWindowToFront(window);
-            }
-        }
     });
+
+    function openWindow(poemId) {
+        const window = document.querySelector(`.window[data-poem-id="${poemId}"]`);
+        if (window) {
+            // Get the saved position and size from data attributes
+            const x = parseInt(window.dataset.x) || 50;
+            const y = parseInt(window.dataset.y) || 50;
+            const width = parseInt(window.dataset.width) || 200;  
+            const height = parseInt(window.dataset.height) || 150;  
+            
+            // Ensure window is not maximized
+            delete window.dataset.isMaximized;
+            const maximizeButton = window.querySelector('.maximize-button');
+            if (maximizeButton) {
+                maximizeButton.classList.remove('is-maximized');
+            }
+            
+            // Store the current size as the original (non-maximized) size
+            window.dataset.originalWidth = `${width}px`;
+            window.dataset.originalHeight = `${height}px`;
+            window.dataset.originalLeft = `${x}px`;
+            window.dataset.originalTop = `${y}px`;
+            
+            // Set window size and position from saved values
+            window.style.width = `${width}px`;
+            window.style.height = `${height}px`;
+            window.style.left = `${x}px`;
+            window.style.top = `${y}px`;
+            
+            // Enable resize functionality
+            const resizeHandle = window.querySelector('.window-resize');
+            if (resizeHandle) {
+                resizeHandle.style.pointerEvents = 'auto';
+            }
+            
+            window.style.display = 'block';
+            bringWindowToFront(window);
+        }
+    }
 
     // Window control buttons functionality
     document.querySelectorAll('.window-controls').forEach(controls => {
         const window = controls.closest('.window');
         const closeButton = controls.querySelector('.close-button');
-        const minimizeButton = controls.querySelector('.minimize-button');
+        const maximizeButton = controls.querySelector('.maximize-button');
 
         closeButton.addEventListener('click', () => window.style.display = 'none');
-        minimizeButton.addEventListener('click', () => window.style.display = 'none');
+        maximizeButton.addEventListener('click', () => {
+            const desktop = document.querySelector('.desktop');
+            const desktopRect = desktop.getBoundingClientRect();
+            
+            if (!window.dataset.isMaximized) {
+                window.dataset.originalWidth = window.style.width;
+                window.dataset.originalHeight = window.style.height;
+                window.dataset.originalLeft = window.style.left;
+                window.dataset.originalTop = window.style.top;
+                
+                // Fill the desktop area completely
+                window.style.width = `${desktopRect.width}px`;
+                window.style.height = `${desktopRect.height}px`;
+                window.style.left = '0';
+                window.style.top = '0';
+                window.dataset.isMaximized = 'true';
+                maximizeButton.classList.add('is-maximized');
+                
+                // Disable resize functionality
+                const resizeHandle = window.querySelector('.window-resize');
+                if (resizeHandle) {
+                    resizeHandle.style.pointerEvents = 'none';
+                }
+            } else {
+                window.style.width = window.dataset.originalWidth;
+                window.style.height = window.dataset.originalHeight;
+                window.style.left = window.dataset.originalLeft;
+                window.style.top = window.dataset.originalTop;
+                delete window.dataset.isMaximized;
+                maximizeButton.classList.remove('is-maximized');
+                
+                // Re-enable resize functionality
+                const resizeHandle = window.querySelector('.window-resize');
+                if (resizeHandle) {
+                    resizeHandle.style.pointerEvents = 'auto';
+                }
+            }
+        });
     });
 });

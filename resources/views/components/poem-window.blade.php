@@ -6,7 +6,7 @@
     data-height="{{ $poem->window_height }}">
     <div class="window-controls">
         <div class="window-button close-button"></div>
-        <div class="window-button minimize-button"></div>
+        <div class="window-button maximize-button"></div>
     </div>
     <div class="window-title">{{$poem->title}}</div>
     <div class="window-content">

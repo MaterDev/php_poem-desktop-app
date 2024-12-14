@@ -39,24 +39,36 @@ body {
 
 /* Desktop Styles */
 .desktop {
-    min-height: 100vh;
-    padding-top: 40px;
+    position: fixed;
+    top: 20px; /* Exactly the height of menu bar */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 0;
+    height: calc(100vh - 20px); /* Full height minus menu bar */
+    width: 100%;
+    overflow: hidden;
+    background-image: url('../images/background.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
-    position: relative;
 }
 
 /* Window Styles */
 .window {
-    background-color: #ffffff;
+    background: #fff;
     border: 1px solid #000;
-    box-shadow: 2px 2px 0 #2e2e2e90;
-    min-height: 150px;
-    min-width: 200px;
     position: absolute;
+    min-width: 200px;
+    min-height: 150px;
+    max-width: 100%;
+    max-height: 100%;
     border-radius: 10px;
+    box-shadow: 2px 2px 0 #2e2e2e90;
     display: none;
 }
 
@@ -66,12 +78,16 @@ body {
     color: #ffffff;
     cursor: move;
     font-size: 14px;
-    padding: 2px 5px 2px 20px; /* Make room for buttons */
+    padding: 5px 5px 2px 20px; /* Make room for buttons */
     text-align: center;
     user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+}
+
+.window[data-is-maximized="true"] .window-title {
+    cursor: default;
 }
 
 .window-content {
@@ -91,21 +107,60 @@ body {
 }
 
 .window-button {
-    background: #fff;
-    border: 1px solid #000;
-    cursor: pointer;
-    height: 12px;
     width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 2px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(0, 0, 0, 0.5);
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.window-button::after {
+    content: '';
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.close-button:hover::after {
+    content: '×';
+    opacity: 1;
+}
+
+.maximize-button:hover::after {
+    content: '↟';
+    opacity: 1;
+}
+
+.maximize-button.is-maximized:hover::after {
+    content: '↡';
+}
+
+.close-button {
+    background-color: #ff5f57;
+}
+
+.maximize-button {
+    background-color: #28c940;
 }
 
 .window-resize {
     position: absolute;
     bottom: 0;
     right: 0;
-    width: 10px;
-    height: 10px;
+    width: 15px;
+    height: 15px;
     cursor: se-resize;
     background: linear-gradient(135deg, transparent 70%, #626262 70%);
+}
+
+.window[data-is-maximized="true"] .window-resize {
+    display: none;
 }
 
 /* Desktop Icon Styles */

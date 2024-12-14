@@ -64,7 +64,6 @@ class PoemController extends Controller
     }
 
     public function updateWindowPosition(Request $request, Poem $poem)
-
     {
         $validated = $request->validate([
             'x' => 'required|numeric',
@@ -73,7 +72,7 @@ class PoemController extends Controller
 
         $poem->update([
             'window_position_x' => $validated['x'],
-            'window_position_y' => $validated['y'],
+            'window_position_y' => $validated['y']
         ]);
 
         return response()->json([
