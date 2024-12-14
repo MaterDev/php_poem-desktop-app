@@ -7,7 +7,7 @@
 </head>
 <body>
     <div id="menu-bar" class="menu-bar">
-        <img src="{{ asset('images/logo.png') }}" class="apple-menu" alt="logo">
+        <img class="apple-menu" alt="logo" src="{{ url('resources/images/logo.png') }}">
         <span>File</span>
     </div>
 
@@ -17,8 +17,7 @@
         <div class="desktop-icon"
             data-poem-id="{{ $poem->id }}"
             data-x="{{ $poem->icon_position_x }}"
-            data-y="{{ $poem->icon_position_y }}"
-            style="left: {{ $poem->icon_position_x }}px; top: {{ $poem->icon_position_y }}px;">
+            data-y="{{ $poem->icon_position_y }}">
             <div class="icon-image"></div>
             <div class="icon-title">{{ $poem->title }}</div>
         </div>
@@ -28,7 +27,10 @@
         @foreach($poems as $poem)
         <div class="window"
             data-poem-id="{{ $poem->id }}"
-            style="left: {{ $poem->window_position_x }}px; top: {{ $poem->window_position_y }}px; width: {{ $poem->window_width }}px; height: {{ $poem->window_height }}px;">
+            data-x="{{ $poem->window_position_x }}"
+            data-y="{{ $poem->window_position_y }}"
+            data-width="{{ $poem->window_width }}"
+            data-height="{{ $poem->window_height }}">
             <div class="window-controls">
                 <div class="window-button close-button"></div>
                 <div class="window-button minimize-button"></div>
@@ -63,6 +65,19 @@
                 window.style.zIndex = topZIndex;
                 document.getElementById('menu-bar').style.zIndex = topZIndex + 1;
             }
+
+            // Position desktop icons and windows on load
+            document.querySelectorAll('.desktop-icon').forEach(icon => {
+                icon.style.left = icon.dataset.x + 'px';
+                icon.style.top = icon.dataset.y + 'px';
+            });
+
+            document.querySelectorAll('.window').forEach(window => {
+                window.style.left = window.dataset.x + 'px';
+                window.style.top = window.dataset.y + 'px';
+                window.style.width = window.dataset.width + 'px';
+                window.style.height = window.dataset.height + 'px';
+            });
 
             // Basic dragging functionality for windows
             document.querySelectorAll('.window').forEach(window => {
@@ -182,11 +197,6 @@
                 let isDragging = false;
                 let initialX;
                 let initialY;
-
-                const x = parseInt(icon.dataset.x) || 0;
-                const y = parseInt(icon.dataset.y) || 0;
-                icon.style.left = `${x}px`;
-                icon.style.top = `${y}px`;
 
                 icon.addEventListener('mousedown', startDragging);
                 document.addEventListener('mousemove', drag);
