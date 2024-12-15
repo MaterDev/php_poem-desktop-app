@@ -2,6 +2,8 @@
 
 A web application that presents poems in a desktop operating system interface. Built with Laravel and JavaScript, this app recreates the familiar feel of a classic operating system.
 
+For a complete list of features and development status, see [FEATURES.md](FEATURES.md).
+
 ## Features
 
 - 🖥️ Desktop-style user interface
